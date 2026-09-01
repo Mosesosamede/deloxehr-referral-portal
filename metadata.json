@@ -1,6 +1,6 @@
 {
   "name": "Deloxehr Referral Protal ",
-  "description": "",
+  "description": "Deloxehr Referr and Earn portal",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
