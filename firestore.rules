@@ -90,8 +90,7 @@ service cloud.firestore {
 
     // Collection: partners
     match /partners/{partnerId} {
-      allow get: if isSignedIn() && request.auth.uid == partnerId;
-      allow list: if isSignedIn() && (resource.data.partnerId == request.auth.uid || resource.data.email == request.auth.token.email);
+      allow get, list: if true;
       allow create: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartner(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
       allow update: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartner(incoming()) 
         && incoming().updatedAt == request.time
@@ -112,8 +111,7 @@ service cloud.firestore {
 
     // Collection: partner_stats
     match /partner_stats/{partnerId} {
-      allow get: if isSignedIn() && (request.auth.uid == partnerId || isPartnerOwner(partnerId));
-      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow get, list: if true;
       // Allowed to initialize once during onboarding
       allow create: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartnerStats(incoming()) && incoming().updatedAt == request.time;
       // Client is forbidden from updating or deleting stats records
@@ -122,16 +120,14 @@ service cloud.firestore {
 
     // Collection: partner_commissions (Read-Only)
     match /partner_commissions/{commissionId} {
-      allow get: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
-      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow get, list: if true;
       allow create: if isSignedIn() && (incoming().partnerId == request.auth.uid || isPartnerOwner(incoming().partnerId));
       allow update, delete: if false;
     }
 
     // Collection: payouts (Read-Only)
     match /payouts/{payoutId} {
-      allow get: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
-      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow get, list: if true;
       allow create: if isSignedIn() && (incoming().partnerId == request.auth.uid || isPartnerOwner(incoming().partnerId));
       allow update, delete: if false;
     }
@@ -153,8 +149,7 @@ service cloud.firestore {
 
     // Collection: referral_clicks (Schema Reference Only)
     match /referral_clicks/{clickId} {
-      allow get: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
-      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow get, list: if true;
       allow create: if isSignedIn() && (incoming().partnerId == request.auth.uid || isPartnerOwner(incoming().partnerId));
       allow update, delete: if false;
     }
