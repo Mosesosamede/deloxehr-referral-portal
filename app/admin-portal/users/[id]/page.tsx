@@ -3,6 +3,8 @@
 import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { 
   ArrowLeft,
   Mail,
@@ -35,21 +37,76 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
 
   const fetchDetail = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
-      const res = await fetch(`/api/admin/users/${id}`);
-      if (res.status === 401) {
-        router.push('/admin-portal/login');
-        return;
+      let partnerSnap = await getDoc(doc(db, 'partners', id));
+      let partnerData = null;
+      let partnerDocId = id;
+
+      if (partnerSnap.exists()) {
+        partnerData = { id: partnerSnap.id, ...partnerSnap.data() };
+      } else {
+        const q = query(collection(db, 'partners'), where('partnerId', '==', id));
+        const qSnap = await getDocs(q);
+        if (!qSnap.empty) {
+          const docSnap = qSnap.docs[0];
+          partnerData = { id: docSnap.id, ...docSnap.data() };
+          partnerDocId = docSnap.id;
+        }
       }
-      if (!res.ok) throw new Error('Failed to fetch');
-      const detail = await res.json();
-      setData(detail);
-    } catch (err) {
-      setError('Failed to load user details');
+
+      if (!partnerData) {
+        throw new Error('User not found in database');
+      }
+
+      const pId = (partnerData as any).partnerId || partnerDocId;
+
+      const statsSnap = await getDoc(doc(db, 'partner_stats', pId));
+      const stats = statsSnap.exists() ? statsSnap.data() : {
+        totalClicks: 0,
+        totalPurchases: 0,
+        totalCommission: 0,
+        balance: 0
+      };
+
+      const commQuery = query(collection(db, 'partner_commissions'), where('partnerId', '==', pId));
+      const commSnap = await getDocs(commQuery);
+      const commissions = commSnap.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          ...data,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString())
+        };
+      });
+      commissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      const clickQuery = query(collection(db, 'referral_clicks'), where('partnerId', '==', pId));
+      const clickSnap = await getDocs(clickQuery);
+      const clicks = clickSnap.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          ...data,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString())
+        };
+      });
+      clicks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      setData({
+        partner: partnerData,
+        stats,
+        commissions: commissions.slice(0, 20),
+        clicks: clicks.slice(0, 20)
+      });
+    } catch (err: any) {
+      console.error('Error fetching user detail:', err);
+      setError(err.message || 'Failed to load user details');
     } finally {
       setLoading(false);
     }
-  }, [id, router]);
+  }, [id]);
 
   useEffect(() => {
     const load = async () => {

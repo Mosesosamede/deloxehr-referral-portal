@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { 
   Users, 
   MousePointer2, 
@@ -53,31 +55,56 @@ export default function AdminDashboard() {
     if (showLoading) setLoading(true);
     setError('');
     try {
-      const [statsRes, usersRes] = await Promise.all([
-        fetch('/api/admin/stats'),
-        fetch('/api/admin/users')
-      ]);
+      const partnersSnapshot = await getDocs(collection(db, 'partners'));
+      const partnersList: any[] = [];
+      partnersSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const createdAtVal = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString());
+        partnersList.push({
+          id: docSnap.id,
+          ...data,
+          createdAt: createdAtVal
+        });
+      });
 
-      const statsData = await statsRes.json();
-      const usersData = await usersRes.json();
+      const statsSnapshot = await getDocs(collection(db, 'partner_stats'));
+      const statsMap: Record<string, any> = {};
+      let totalClicks = 0;
+      let totalConversions = 0;
+      let totalCommission = 0;
 
-      if (statsRes.status === 401 || usersRes.status === 401) {
-        router.push('/admin-portal/login');
-        return;
-      }
+      statsSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        statsMap[docSnap.id] = data;
+        totalClicks += data.totalClicks || 0;
+        totalConversions += data.totalPurchases || 0;
+        totalCommission += data.totalCommission || 0;
+      });
 
-      if (!statsRes.ok || !usersRes.ok) {
-        throw new Error(statsData.details || usersData.details || 'Failed to fetch dashboard data');
-      }
+      const enrichedUsers = partnersList.map(partner => ({
+        ...partner,
+        stats: statsMap[partner.partnerId] || statsMap[partner.id] || {
+          totalClicks: 0,
+          totalPurchases: 0,
+          totalCommission: 0,
+          balance: 0
+        }
+      }));
 
-      setStats(statsData);
-      setUsers(Array.isArray(usersData) ? usersData : []);
+      setStats({
+        totalUsers: partnersList.length,
+        totalClicks,
+        totalConversions,
+        totalCommission
+      });
+      setUsers(enrichedUsers);
     } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data');
+      console.error('Error fetching admin data directly from Firestore:', err);
+      setError(err.message || 'Failed to load dashboard data from database');
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
