@@ -1,6 +1,7 @@
 import { getApps, initializeApp, cert, getApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import appletConfig from '../firebase-applet-config.json';
 
 /**
  * Reusable server-side Firebase Admin SDK initialization wrapper.
@@ -12,7 +13,7 @@ export function getFirebaseAdminApp() {
   }
 
   if (getApps().length === 0) {
-    const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
+    const projectId = process.env.FIREBASE_PROJECT_ID?.trim() || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim() || appletConfig.projectId;
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
     let privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
     
@@ -24,25 +25,29 @@ export function getFirebaseAdminApp() {
       privateKey = privateKey.replace(/\\n/g, '\n');
     }
 
-    if (!projectId || !clientEmail || !privateKey) {
-      console.warn(
-        'Firebase Admin environment variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) are incomplete. ' +
-        'Admin SDK features may not function until these are configured.'
-      );
-      return null;
-    }
-
     try {
-      return initializeApp({
-        credential: cert({
+      if (clientEmail && privateKey) {
+        return initializeApp({
+          credential: cert({
+            projectId: projectId || 'deloxehr-d0f61',
+            clientEmail,
+            privateKey,
+          }),
+        });
+      } else if (projectId) {
+        return initializeApp({
           projectId,
-          clientEmail,
-          privateKey,
-        }),
-      });
+        });
+      } else {
+        return initializeApp();
+      }
     } catch (error) {
       console.error('Error initializing Firebase Admin SDK:', error);
-      return null;
+      try {
+        return initializeApp({ projectId: 'deloxehr-d0f61' });
+      } catch (e) {
+        return null;
+      }
     }
   }
 
@@ -52,6 +57,10 @@ export function getFirebaseAdminApp() {
 export function getAdminFirestore() {
   const app = getFirebaseAdminApp();
   if (!app) return null;
+  const dbId = appletConfig.firestoreDatabaseId;
+  if (dbId && dbId !== '(default)') {
+    return getFirestore(app, dbId);
+  }
   return getFirestore(app);
 }
 
@@ -60,3 +69,4 @@ export function getAdminAuth() {
   if (!app) return null;
   return getAuth(app);
 }
+

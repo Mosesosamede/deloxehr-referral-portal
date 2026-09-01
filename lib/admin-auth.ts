@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
+const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
 const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'a-very-long-and-random-default-secret-key-for-admin-panel'
 );
@@ -9,7 +10,7 @@ const SECRET = new TextEncoder().encode(
 const COOKIE_NAME = 'admin_session';
 
 export async function createSession(pin: string) {
-  if (pin !== process.env.ADMIN_PIN) {
+  if (pin !== ADMIN_PIN) {
     return null;
   }
 
