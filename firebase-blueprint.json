@@ -1,0 +1,371 @@
+{
+  "entities": {
+    "Partner": {
+      "title": "Partner",
+      "description": "Represents a partner's profile and payout preferences.",
+      "type": "object",
+      "properties": {
+        "partnerId": {
+          "type": "string",
+          "description": "The unique Firebase Auth UID."
+        },
+        "partnerDisplayId": {
+          "type": "string",
+          "description": "The short visual custom partner ID, starting with DELXp."
+        },
+        "partnerType": {
+          "type": "string",
+          "enum": ["individual", "corporate"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active"]
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "companyName": {
+          "type": "string"
+        },
+        "representativeName": {
+          "type": "string"
+        },
+        "representativeTitle": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "socialHandle": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "referralCode": {
+          "type": "string"
+        },
+        "trackingSlug": {
+          "type": "string"
+        },
+        "rewardRate": {
+          "type": "number"
+        },
+        "payoutFrequency": {
+          "type": "string",
+          "enum": ["weekly", "monthly"]
+        },
+        "payoutMethod": {
+          "type": "string",
+          "enum": ["bank_transfer", "crypto"]
+        },
+        "bankName": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "cryptoCurrency": {
+          "type": "string"
+        },
+        "cryptoNetwork": {
+          "type": "string"
+        },
+        "walletAddress": {
+          "type": "string"
+        },
+        "agreementAccepted": {
+          "type": "boolean"
+        },
+        "agreementSignedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "partnerId",
+        "partnerDisplayId",
+        "partnerType",
+        "status",
+        "fullName",
+        "email",
+        "phone",
+        "socialHandle",
+        "country",
+        "currency",
+        "referralCode",
+        "trackingSlug",
+        "rewardRate",
+        "payoutFrequency",
+        "payoutMethod",
+        "bankName",
+        "accountName",
+        "accountNumber",
+        "cryptoCurrency",
+        "cryptoNetwork",
+        "walletAddress",
+        "agreementAccepted",
+        "agreementSignedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PartnerStats": {
+      "title": "PartnerStats",
+      "description": "Aggregated statistics for a partner.",
+      "type": "object",
+      "properties": {
+        "partnerId": {
+          "type": "string"
+        },
+        "totalClicks": {
+          "type": "number"
+        },
+        "totalPurchases": {
+          "type": "number"
+        },
+        "totalCommission": {
+          "type": "number"
+        },
+        "totalPaid": {
+          "type": "number"
+        },
+        "balance": {
+          "type": "number"
+        },
+        "nextPayout": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "partnerId",
+        "totalClicks",
+        "totalPurchases",
+        "totalCommission",
+        "totalPaid",
+        "balance",
+        "updatedAt"
+      ]
+    },
+    "PartnerCommission": {
+      "title": "PartnerCommission",
+      "description": "Commissions earned by the partner on consumer orders.",
+      "type": "object",
+      "properties": {
+        "commissionId": {
+          "type": "string"
+        },
+        "partnerId": {
+          "type": "string"
+        },
+        "purchaseId": {
+          "type": "string"
+        },
+        "transactionId": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "amountPaid": {
+          "type": "number"
+        },
+        "commissionAmount": {
+          "type": "number"
+        },
+        "payoutStatus": {
+          "type": "string",
+          "enum": ["pending", "processing", "paid"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "commissionId",
+        "partnerId",
+        "purchaseId",
+        "transactionId",
+        "email",
+        "amountPaid",
+        "commissionAmount",
+        "payoutStatus",
+        "createdAt"
+      ]
+    },
+    "Payout": {
+      "title": "Payout",
+      "description": "Financial payouts distributed to the partner.",
+      "type": "object",
+      "properties": {
+        "payoutId": {
+          "type": "string"
+        },
+        "partnerId": {
+          "type": "string"
+        },
+        "periodStart": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "periodEnd": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "totalAmount": {
+          "type": "number"
+        },
+        "paymentReference": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["processing", "completed", "failed"]
+        },
+        "paidAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "payoutId",
+        "partnerId",
+        "periodStart",
+        "periodEnd",
+        "totalAmount",
+        "paymentReference",
+        "status",
+        "paidAt"
+      ]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Notifications pushed to the partner.",
+      "type": "object",
+      "properties": {
+        "notificationId": {
+          "type": "string"
+        },
+        "partnerId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "read": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "notificationId",
+        "partnerId",
+        "title",
+        "message",
+        "read",
+        "createdAt"
+      ]
+    },
+    "ReferralClick": {
+      "title": "ReferralClick",
+      "description": "Tracking metrics for clicks on partner's referral link.",
+      "type": "object",
+      "properties": {
+        "clickId": {
+          "type": "string"
+        },
+        "partnerId": {
+          "type": "string"
+        },
+        "referralCode": {
+          "type": "string"
+        },
+        "ip": {
+          "type": "string"
+        },
+        "device": {
+          "type": "string"
+        },
+        "browser": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "landingPage": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "clickId",
+        "partnerId",
+        "referralCode",
+        "ip",
+        "device",
+        "browser",
+        "country",
+        "landingPage",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/partners/{partnerId}": {
+      "schema": "Partner",
+      "description": "Primary profile information for registered partners."
+    },
+    "/partner_stats/{partnerId}": {
+      "schema": "PartnerStats",
+      "description": "Aggregated stats for clicks, purchases, commissions, and balance."
+    },
+    "/partner_commissions/{commissionId}": {
+      "schema": "PartnerCommission",
+      "description": "Specific commissions generated for partner referral purchases."
+    },
+    "/payouts/{payoutId}": {
+      "schema": "Payout",
+      "description": "History of financial pay outs made to partners."
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Alerts and messages for partners."
+    },
+    "/referral_clicks/{clickId}": {
+      "schema": "ReferralClick",
+      "description": "Individual tracker for referral link visits."
+    }
+  }
+}

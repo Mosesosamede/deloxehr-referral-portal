@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-sans), sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  /* Custom brand palette for Deloxe HR */
+  --color-brand-primary: #00CC88;
+  --color-brand-white: #FFFFFF;
+  --color-brand-bg: #1A2421;
+  --color-brand-accent: #F7F167;
+  --color-brand-card: #23312C;
+  --color-brand-text-pale: #DAF0DD;
+}
+

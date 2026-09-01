@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helper for partners (Collection: /partners/{partnerId})
+    function isValidPartner(data) {
+      return data.keys().hasAll([
+        'partnerId', 'partnerDisplayId', 'partnerType', 'status', 'fullName', 'companyName', 'representativeName', 'representativeTitle',
+        'email', 'phone', 'socialHandle', 'country', 'currency', 'referralCode', 'trackingSlug', 'rewardRate', 'payoutFrequency',
+        'payoutMethod', 'bankName', 'accountName', 'accountNumber', 'cryptoCurrency', 'cryptoNetwork', 'walletAddress', 'agreementAccepted', 'agreementSignedAt', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().size() == 28
+      && data.partnerId == request.auth.uid
+      && data.partnerDisplayId is string && data.partnerDisplayId.size() > 0 && data.partnerDisplayId.size() <= 50
+      && data.partnerType in ['individual', 'corporate']
+      && data.status == 'active'
+      && data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 100
+      && (data.companyName == null || (data.companyName is string && data.companyName.size() <= 100))
+      && (data.representativeName == null || (data.representativeName is string && data.representativeName.size() <= 100))
+      && (data.representativeTitle == null || (data.representativeTitle is string && data.representativeTitle.size() <= 100))
+      && data.email is string && data.email.size() > 0 && data.email.size() <= 100
+      && data.phone is string && data.phone.size() > 0 && data.phone.size() <= 50
+      && data.socialHandle is string && data.socialHandle.size() > 0 && data.socialHandle.size() <= 100
+      && data.country is string && data.country.size() > 0 && data.country.size() <= 100
+      && data.currency is string && data.currency.size() > 0 && data.currency.size() <= 10
+      && data.referralCode is string && data.referralCode.size() > 0 && data.referralCode.size() <= 50
+      && data.trackingSlug is string && data.trackingSlug.size() > 0 && data.trackingSlug.size() <= 200
+      && data.rewardRate is number && (data.rewardRate == 1500 || data.rewardRate == 3000 || data.rewardRate == 1.8 || data.rewardRate == 2.17 || data.rewardRate == 1.91 || data.rewardRate == 1.66)
+      && data.payoutFrequency in ['weekly', 'monthly']
+      && data.payoutMethod in ['bank_transfer', 'crypto']
+      && data.bankName is string && data.bankName.size() <= 100
+      && data.accountName is string && data.accountName.size() <= 100
+      && data.accountNumber is string && data.accountNumber.size() <= 50
+      && data.cryptoCurrency is string && data.cryptoCurrency.size() <= 20
+      && data.cryptoNetwork is string && data.cryptoNetwork.size() <= 50
+      && data.walletAddress is string && data.walletAddress.size() <= 200
+      && data.agreementAccepted == true
+      && data.agreementSignedAt is timestamp
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    // Validation helper for partner stats (Collection: /partner_stats/{partnerId})
+    function isValidPartnerStats(data) {
+      return data.keys().hasAll([
+        'partnerId', 'totalClicks', 'totalPurchases', 'totalCommission', 'totalPaid', 'balance', 'nextPayout', 'updatedAt'
+      ])
+      && data.keys().size() == 8
+      && data.partnerId == request.auth.uid
+      && data.totalClicks == 0
+      && data.totalPurchases == 0
+      && data.totalCommission == 0
+      && data.totalPaid == 0
+      && data.balance == 0
+      && (data.nextPayout == null || data.nextPayout is timestamp)
+      && data.updatedAt is timestamp;
+    }
+
+    // Helper to check if a partnerId/displayId belongs to the signed-in user
+    function isPartnerOwner(partnerId) {
+      return isSignedIn() && (
+        partnerId == request.auth.uid ||
+        (exists(/databases/$(database)/documents/partners/$(request.auth.uid)) && (
+          partnerId == get(/databases/$(database)/documents/partners/$(request.auth.uid)).data.partnerDisplayId ||
+          partnerId == get(/databases/$(database)/documents/partners/$(request.auth.uid)).data.partnerId
+        ))
+      );
+    }
+
+    // Collection: partners
+    match /partners/{partnerId} {
+      allow get: if isSignedIn() && request.auth.uid == partnerId;
+      allow list: if isSignedIn() && (resource.data.partnerId == request.auth.uid || resource.data.email == request.auth.token.email);
+      allow create: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartner(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartner(incoming()) 
+        && incoming().updatedAt == request.time
+        && incoming().partnerId == existing().partnerId
+        && incoming().partnerDisplayId == existing().partnerDisplayId
+        && incoming().partnerType == existing().partnerType
+        && incoming().referralCode == existing().referralCode
+        && incoming().rewardRate == existing().rewardRate
+        && incoming().country == existing().country
+        && incoming().currency == existing().currency
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'fullName', 'companyName', 'representativeName', 'representativeTitle', 
+          'email', 'phone', 'socialHandle', 'payoutMethod', 'bankName', 'accountName', 'accountNumber', 
+          'cryptoCurrency', 'cryptoNetwork', 'walletAddress', 'payoutFrequency', 'updatedAt'
+        ]);
+    }
+
+    // Collection: partner_stats
+    match /partner_stats/{partnerId} {
+      allow get: if isSignedIn() && (request.auth.uid == partnerId || isPartnerOwner(partnerId));
+      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      // Allowed to initialize once during onboarding
+      allow create: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartnerStats(incoming()) && incoming().updatedAt == request.time;
+      // Client is forbidden from updating or deleting stats records
+      allow update, delete: if false;
+    }
+
+    // Collection: partner_commissions (Read-Only)
+    match /partner_commissions/{commissionId} {
+      allow get: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow create: if isSignedIn() && (incoming().partnerId == request.auth.uid || isPartnerOwner(incoming().partnerId));
+      allow update, delete: if false;
+    }
+
+    // Collection: payouts (Read-Only)
+    match /payouts/{payoutId} {
+      allow get: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow create: if isSignedIn() && (incoming().partnerId == request.auth.uid || isPartnerOwner(incoming().partnerId));
+      allow update, delete: if false;
+    }
+
+    // Collection: notifications (Read/Update Notification Status Allowed)
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow create: if isSignedIn() && (incoming().partnerId == request.auth.uid || isPartnerOwner(incoming().partnerId));
+      allow delete: if false;
+      allow update: if isSignedIn() && isPartnerOwner(resource.data.partnerId) && isValidId(notificationId)
+        && incoming().partnerId == existing().partnerId
+        && incoming().title == existing().title
+        && incoming().message == existing().message
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['read'])
+        && incoming().read is bool;
+    }
+
+    // Collection: referral_clicks (Schema Reference Only)
+    match /referral_clicks/{clickId} {
+      allow get: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow list: if isSignedIn() && isPartnerOwner(resource.data.partnerId);
+      allow create: if isSignedIn() && (incoming().partnerId == request.auth.uid || isPartnerOwner(incoming().partnerId));
+      allow update, delete: if false;
+    }
+  }
+}
