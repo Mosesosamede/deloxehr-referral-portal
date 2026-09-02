@@ -74,7 +74,7 @@ export function usePartner() {
     email: "",
     phone: "",
     socialHandle: "",
-    payoutMethod: "bank_transfer" as "bank_transfer" | "crypto",
+    payoutMethod: "" as "" | "bank_transfer" | "crypto",
     bankName: "",
     accountName: "",
     accountNumber: "",
@@ -95,7 +95,7 @@ export function usePartner() {
     email: "",
     phone: "",
     socialHandle: "",
-    payoutMethod: "bank_transfer" as "bank_transfer" | "crypto",
+    payoutMethod: "" as "" | "bank_transfer" | "crypto",
     bankName: "",
     accountName: "",
     accountNumber: "",
@@ -394,12 +394,17 @@ export function usePartner() {
       return;
     }
 
+    if (!payoutMethod) {
+      setOnboardingError("Please select a payout method.");
+      return;
+    }
+
     if (payoutMethod === "bank_transfer") {
       if (!bankName || !accountName || !accountNumber) {
         setOnboardingError("Please complete all bank transfer details.");
         return;
       }
-    } else {
+    } else if (payoutMethod === "crypto") {
       if (!cryptoCurrency || !cryptoNetwork || !walletAddress) {
         setOnboardingError("Please complete all cryptocurrency, network, and wallet address fields.");
         return;
@@ -413,6 +418,9 @@ export function usePartner() {
         setOnboardingError(walletCheck.message || "Invalid wallet address.");
         return;
       }
+    } else {
+      setOnboardingError("Please select a payout method.");
+      return;
     }
 
     if (!agreementAccepted || !digitalSignature) {
@@ -449,7 +457,7 @@ export function usePartner() {
 
       const partnerDisplayId = "DELXp" + Math.floor(1 + Math.random() * 999);
 
-      const payload: Omit<PartnerDocument, 'createdAt' | 'updatedAt' | 'agreementSignedAt'> = {
+      const payload: any = {
         partnerId: user.uid,
         partnerDisplayId,
         partnerType,
@@ -468,13 +476,17 @@ export function usePartner() {
         rewardRate,
         payoutFrequency,
         payoutMethod,
-        bankName: payoutMethod === 'bank_transfer' ? bankName : '',
-        accountName: payoutMethod === 'bank_transfer' ? accountName : '',
-        accountNumber: payoutMethod === 'bank_transfer' ? accountNumber : '',
-        cryptoCurrency: payoutMethod === 'crypto' ? cryptoCurrency : undefined,
-        cryptoNetwork: payoutMethod === 'crypto' ? cryptoNetwork : undefined,
-        walletAddress: payoutMethod === 'crypto' ? walletAddress : undefined,
-        agreementAccepted
+        agreementAccepted,
+        ...(payoutMethod === 'bank_transfer' ? {
+          bankName,
+          accountName,
+          accountNumber,
+        } : {}),
+        ...(payoutMethod === 'crypto' ? {
+          cryptoCurrency,
+          cryptoNetwork,
+          walletAddress,
+        } : {})
       };
 
       await createPartnerProfile(payload);
@@ -492,7 +504,7 @@ export function usePartner() {
           email: profile.email || "",
           phone: profile.phone || "",
           socialHandle: profile.socialHandle || "",
-          payoutMethod: profile.payoutMethod || "bank_transfer",
+          payoutMethod: profile.payoutMethod || "",
           bankName: profile.bankName || "",
           accountName: profile.accountName || "",
           accountNumber: profile.accountNumber || "",
@@ -523,13 +535,19 @@ export function usePartner() {
       return;
     }
 
+    if (!editForm.payoutMethod) {
+      setEditError("Please select a payout method.");
+      setEditLoading(false);
+      return;
+    }
+
     if (editForm.payoutMethod === 'bank_transfer') {
       if (!editForm.bankName || !editForm.accountName || !editForm.accountNumber) {
         setEditError("Please complete all bank transfer details.");
         setEditLoading(false);
         return;
       }
-    } else {
+    } else if (editForm.payoutMethod === 'crypto') {
       if (!editForm.cryptoCurrency || !editForm.cryptoNetwork || !editForm.walletAddress) {
         setEditError("Please complete all cryptocurrency, network, and wallet address fields.");
         setEditLoading(false);
@@ -546,10 +564,14 @@ export function usePartner() {
         setEditLoading(false);
         return;
       }
+    } else {
+      setEditError("Please select a payout method.");
+      setEditLoading(false);
+      return;
     }
 
     try {
-      await updatePartnerProfile(user.uid, {
+      const updatePayload: any = {
         fullName: editForm.fullName,
         companyName: partner.partnerType === "corporate" ? editForm.companyName : null,
         representativeName: partner.partnerType === "corporate" ? editForm.representativeName : null,
@@ -558,14 +580,20 @@ export function usePartner() {
         phone: editForm.phone,
         socialHandle: editForm.socialHandle,
         payoutMethod: editForm.payoutMethod,
-        bankName: editForm.payoutMethod === 'bank_transfer' ? editForm.bankName : '',
-        accountName: editForm.payoutMethod === 'bank_transfer' ? editForm.accountName : '',
-        accountNumber: editForm.payoutMethod === 'bank_transfer' ? editForm.accountNumber : '',
-        cryptoCurrency: editForm.payoutMethod === 'crypto' ? editForm.cryptoCurrency : undefined,
-        cryptoNetwork: editForm.payoutMethod === 'crypto' ? editForm.cryptoNetwork : undefined,
-        walletAddress: editForm.payoutMethod === 'crypto' ? editForm.walletAddress : undefined,
-        payoutFrequency: editForm.payoutFrequency
-      });
+        payoutFrequency: editForm.payoutFrequency,
+        ...(editForm.payoutMethod === 'bank_transfer' ? {
+          bankName: editForm.bankName,
+          accountName: editForm.accountName,
+          accountNumber: editForm.accountNumber,
+        } : {}),
+        ...(editForm.payoutMethod === 'crypto' ? {
+          cryptoCurrency: editForm.cryptoCurrency,
+          cryptoNetwork: editForm.cryptoNetwork,
+          walletAddress: editForm.walletAddress,
+        } : {})
+      };
+
+      await updatePartnerProfile(user.uid, updatePayload);
 
       setEditSuccess("Profile preferences saved successfully.");
       const updatedProfile = await getPartnerProfile(user.uid);

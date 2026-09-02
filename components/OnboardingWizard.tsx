@@ -33,7 +33,7 @@ interface OnboardingWizardProps {
     email: string;
     phone: string;
     socialHandle: string;
-    payoutMethod: "bank_transfer" | "crypto";
+    payoutMethod: "" | "bank_transfer" | "crypto";
     bankName: string;
     accountName: string;
     accountNumber: string;
@@ -332,7 +332,7 @@ export default function OnboardingWizard({
                         </div>
                       </div>
 
-                      {obForm.payoutMethod === "bank_transfer" ? (
+                      {obForm.payoutMethod === "bank_transfer" && (
                         <>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1">
@@ -372,7 +372,9 @@ export default function OnboardingWizard({
                             />
                           </div>
                         </>
-                      ) : (
+                      )}
+
+                      {obForm.payoutMethod === "crypto" && (
                         <>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1">
@@ -421,6 +423,12 @@ export default function OnboardingWizard({
                             />
                           </div>
                         </>
+                      )}
+
+                      {!obForm.payoutMethod && (
+                        <div className="p-6 bg-[#131b19] border border-[#DAF0DD]/15 rounded-xl text-center text-xs text-[#DAF0DD]/60 font-mono">
+                          Please select a payout method above (Bank Transfer or Crypto) to continue.
+                        </div>
                       )}
 
                       <div className="flex flex-col gap-1.5 mt-2">

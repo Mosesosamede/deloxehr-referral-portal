@@ -22,7 +22,7 @@ interface SettingsTabProps {
     email: string;
     phone: string;
     socialHandle: string;
-    payoutMethod: "bank_transfer" | "crypto";
+    payoutMethod: "" | "bank_transfer" | "crypto";
     bankName: string;
     accountName: string;
     accountNumber: string;
@@ -188,7 +188,7 @@ export default function SettingsTab({
               </div>
             </div>
 
-            {editForm.payoutMethod === "bank_transfer" ? (
+            {editForm.payoutMethod === "bank_transfer" && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1">
@@ -224,7 +224,9 @@ export default function SettingsTab({
                   />
                 </div>
               </>
-            ) : (
+            )}
+
+            {editForm.payoutMethod === "crypto" && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1">
@@ -272,6 +274,12 @@ export default function SettingsTab({
                   />
                 </div>
               </>
+            )}
+
+            {!editForm.payoutMethod && (
+              <div className="p-4 bg-[#131b19] rounded-lg text-center text-xs text-[#DAF0DD]/50 font-mono">
+                Please select a payout method (Bank Transfer or Crypto).
+              </div>
             )}
 
             <div className="flex flex-col gap-1 mt-1">
