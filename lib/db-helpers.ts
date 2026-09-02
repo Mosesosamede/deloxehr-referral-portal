@@ -10,7 +10,8 @@ import {
   orderBy, 
   serverTimestamp,
   Timestamp,
-  getDocFromServer
+  getDocFromServer,
+  deleteField
 } from "firebase/firestore";
 import { db, auth } from "./firebase";
 
@@ -450,11 +451,30 @@ export async function updatePartnerProfile(
       }
     }
   }
+
+  const firestoreUpdates: any = {
+    ...updates,
+    updatedAt: serverTimestamp()
+  };
+
+  if (updates.payoutMethod === 'bank_transfer') {
+    firestoreUpdates.bankName = updates.bankName;
+    firestoreUpdates.accountName = updates.accountName;
+    firestoreUpdates.accountNumber = updates.accountNumber;
+    firestoreUpdates.cryptoCurrency = deleteField();
+    firestoreUpdates.cryptoNetwork = deleteField();
+    firestoreUpdates.walletAddress = deleteField();
+  } else if (updates.payoutMethod === 'crypto') {
+    firestoreUpdates.cryptoCurrency = updates.cryptoCurrency;
+    firestoreUpdates.cryptoNetwork = updates.cryptoNetwork;
+    firestoreUpdates.walletAddress = updates.walletAddress;
+    firestoreUpdates.bankName = deleteField();
+    firestoreUpdates.accountName = deleteField();
+    firestoreUpdates.accountNumber = deleteField();
+  }
+
   try {
-    await updateDoc(doc(db, "partners", partnerId), {
-      ...updates,
-      updatedAt: serverTimestamp()
-    });
+    await updateDoc(doc(db, "partners", partnerId), firestoreUpdates);
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, path);
     throw error;
