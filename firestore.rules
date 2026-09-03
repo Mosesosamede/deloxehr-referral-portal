@@ -34,7 +34,7 @@ service cloud.firestore {
         'email', 'phone', 'socialHandle', 'country', 'currency', 'referralCode', 'trackingSlug', 'rewardRate', 'payoutFrequency',
         'payoutMethod', 'agreementAccepted', 'agreementSignedAt', 'createdAt', 'updatedAt'
       ])
-      && data.keys().size() == 25
+      && (data.keys().size() == 25 || data.keys().size() == 25)
       && data.partnerId == request.auth.uid
       && data.partnerDisplayId is string && data.partnerDisplayId.size() > 0 && data.partnerDisplayId.size() <= 50
       && data.partnerType in ['individual', 'corporate']
