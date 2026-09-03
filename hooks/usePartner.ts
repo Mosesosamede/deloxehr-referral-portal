@@ -130,6 +130,7 @@ export function usePartner() {
         try {
           const profile = await getPartnerProfile(firebaseUser.uid);
           if (profile) {
+            sessionStorage.removeItem('delox_signup_in_progress');
             if (profile.partnerId !== firebaseUser.uid) {
               profile.partnerId = firebaseUser.uid;
             }
@@ -142,7 +143,7 @@ export function usePartner() {
               email: profile.email || "",
               phone: profile.phone || "",
               socialHandle: profile.socialHandle || "",
-              payoutMethod: profile.payoutMethod || "bank_transfer",
+              payoutMethod: profile.payoutMethod || "",
               bankName: profile.bankName || "",
               accountName: profile.accountName || "",
               accountNumber: profile.accountNumber || "",
@@ -152,6 +153,18 @@ export function usePartner() {
               payoutFrequency: profile.payoutFrequency || "weekly"
             });
           } else {
+            // Check if browser was refreshed during onboarding/signup
+            if (sessionStorage.getItem('delox_signup_in_progress')) {
+              await signOut(auth);
+              sessionStorage.removeItem('delox_signup_in_progress');
+              setUser(null);
+              setPartner(null);
+              setAuthChecking(false);
+              setLoading(false);
+              return;
+            }
+            sessionStorage.setItem('delox_signup_in_progress', 'true');
+
             const email = firebaseUser.email;
             if (email) {
               const emailExists = await isEmailRegisteredInPartners(email, firebaseUser.uid);
@@ -175,6 +188,7 @@ export function usePartner() {
           console.error("Error evaluating profile:", error);
         }
       } else {
+        sessionStorage.removeItem('delox_signup_in_progress');
         setUser(null);
         setPartner(null);
         setStats(null);
@@ -339,6 +353,7 @@ export function usePartner() {
         await signInWithEmailAndPassword(auth, authEmail, authPassword);
       } else {
         await createUserWithEmailAndPassword(auth, authEmail, authPassword);
+        sessionStorage.setItem('delox_signup_in_progress', 'true');
       }
     } catch (error: any) {
       console.error("Email auth error:", error);
@@ -490,6 +505,7 @@ export function usePartner() {
       };
 
       await createPartnerProfile(payload);
+      sessionStorage.removeItem('delox_signup_in_progress');
       await initializePartnerStats(user.uid);
       await seedPlaceholderDocuments(user.uid, referralCode);
 
