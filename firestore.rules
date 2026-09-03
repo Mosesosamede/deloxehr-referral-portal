@@ -33,11 +33,8 @@ service cloud.firestore {
         'partnerId', 'partnerDisplayId', 'partnerType', 'status', 'fullName', 'companyName', 'representativeName', 'representativeTitle',
         'email', 'phone', 'socialHandle', 'country', 'currency', 'referralCode', 'trackingSlug', 'rewardRate', 'payoutFrequency',
         'payoutMethod', 'agreementAccepted', 'agreementSignedAt', 'createdAt', 'updatedAt'
-      ].concat(
-        data.payoutMethod == 'bank_transfer' ? ['bankName', 'accountName', 'accountNumber'] :
-        data.payoutMethod == 'crypto' ? ['cryptoCurrency', 'cryptoNetwork', 'walletAddress'] : []
-      ))
-      && data.keys().size() == (22 + (data.payoutMethod == 'bank_transfer' ? 3 : data.payoutMethod == 'crypto' ? 3 : 0))
+      ])
+      && data.keys().size() == 25
       && data.partnerId == request.auth.uid
       && data.partnerDisplayId is string && data.partnerDisplayId.size() > 0 && data.partnerDisplayId.size() <= 50
       && data.partnerType in ['individual', 'corporate']
@@ -56,16 +53,20 @@ service cloud.firestore {
       && data.rewardRate is number && (data.rewardRate == 1500 || data.rewardRate == 3000 || data.rewardRate == 1.8 || data.rewardRate == 2.17 || data.rewardRate == 1.91 || data.rewardRate == 1.66)
       && data.payoutFrequency in ['weekly', 'monthly']
       && data.payoutMethod in ['bank_transfer', 'crypto']
-      && (data.payoutMethod != 'bank_transfer' || (
-           data.bankName is string && data.bankName.size() <= 100 &&
-           data.accountName is string && data.accountName.size() <= 100 &&
-           data.accountNumber is string && data.accountNumber.size() <= 50
-         ))
-      && (data.payoutMethod != 'crypto' || (
-           data.cryptoCurrency is string && data.cryptoCurrency.size() <= 20 &&
-           data.cryptoNetwork is string && data.cryptoNetwork.size() <= 50 &&
-           data.walletAddress is string && data.walletAddress.size() <= 200
-         ))
+      && (
+        (data.payoutMethod == 'bank_transfer' 
+          && data.keys().hasAll(['bankName', 'accountName', 'accountNumber'])
+          && data.bankName is string && data.bankName.size() <= 100
+          && data.accountName is string && data.accountName.size() <= 100
+          && data.accountNumber is string && data.accountNumber.size() <= 50
+        ) ||
+        (data.payoutMethod == 'crypto'
+          && data.keys().hasAll(['cryptoCurrency', 'cryptoNetwork', 'walletAddress'])
+          && data.cryptoCurrency is string && data.cryptoCurrency.size() <= 20
+          && data.cryptoNetwork is string && data.cryptoNetwork.size() <= 50
+          && data.walletAddress is string && data.walletAddress.size() <= 200
+        )
+      )
       && data.agreementAccepted == true
       && data.agreementSignedAt is timestamp
       && data.createdAt is timestamp
