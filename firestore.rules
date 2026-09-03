@@ -34,7 +34,6 @@ service cloud.firestore {
         'email', 'phone', 'socialHandle', 'country', 'currency', 'referralCode', 'trackingSlug', 'rewardRate', 'payoutFrequency',
         'payoutMethod', 'agreementAccepted', 'agreementSignedAt', 'createdAt', 'updatedAt'
       ])
-      && (data.keys().size() == 25 || data.keys().size() == 25)
       && data.partnerId == request.auth.uid
       && data.partnerDisplayId is string && data.partnerDisplayId.size() > 0 && data.partnerDisplayId.size() <= 50
       && data.partnerType in ['individual', 'corporate']
@@ -78,7 +77,6 @@ service cloud.firestore {
       return data.keys().hasAll([
         'partnerId', 'totalClicks', 'totalPurchases', 'totalCommission', 'totalPaid', 'balance', 'nextPayout', 'updatedAt'
       ])
-      && data.keys().size() == 8
       && data.partnerId == request.auth.uid
       && data.totalClicks == 0
       && data.totalPurchases == 0
@@ -103,9 +101,9 @@ service cloud.firestore {
     // Collection: partners
     match /partners/{partnerId} {
       allow get, list: if true;
-      allow create: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartner(incoming()) && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow create: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartner(incoming()) && incoming().createdAt is timestamp && incoming().updatedAt is timestamp;
       allow update: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartner(incoming()) 
-        && incoming().updatedAt == request.time
+        && incoming().updatedAt is timestamp
         && incoming().partnerId == existing().partnerId
         && incoming().partnerDisplayId == existing().partnerDisplayId
         && incoming().partnerType == existing().partnerType
@@ -125,7 +123,7 @@ service cloud.firestore {
     match /partner_stats/{partnerId} {
       allow get, list: if true;
       // Allowed to initialize once during onboarding
-      allow create: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartnerStats(incoming()) && incoming().updatedAt == request.time;
+      allow create: if isSignedIn() && request.auth.uid == partnerId && isValidId(partnerId) && isValidPartnerStats(incoming()) && incoming().updatedAt is timestamp;
       // Client is forbidden from updating or deleting stats records
       allow update, delete: if false;
     }
