@@ -28,9 +28,10 @@ service cloud.firestore {
     }
 
     // Validation helper for partners (Collection: /partners/{partnerId})
+    // Fixed Validation helper for partners (Collection: /partners/{partnerId})
     function isValidPartner(data) {
       return data.keys().hasAll([
-        'partnerId', 'partnerDisplayId', 'partnerType', 'status', 'fullName', 'companyName', 'representativeName', 'representativeTitle',
+        'partnerId', 'partnerDisplayId', 'partnerType', 'status', 'fullName', 
         'email', 'phone', 'socialHandle', 'country', 'currency', 'referralCode', 'trackingSlug', 'rewardRate', 'payoutFrequency',
         'payoutMethod', 'agreementAccepted', 'agreementSignedAt', 'createdAt', 'updatedAt'
       ])
@@ -39,9 +40,12 @@ service cloud.firestore {
       && data.partnerType in ['individual', 'corporate']
       && data.status == 'active'
       && data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 100
-      && (data.companyName == null || (data.companyName is string && data.companyName.size() <= 100))
-      && (data.representativeName == null || (data.representativeName is string && data.representativeName.size() <= 100))
-      && (data.representativeTitle == null || (data.representativeTitle is string && data.representativeTitle.size() <= 100))
+      
+      // Safe check for optional fields that might be missing or null
+      && (!data.keys().hasAll(['companyName']) || data.companyName == null || (data.companyName is string && data.companyName.size() <= 100))
+      && (!data.keys().hasAll(['representativeName']) || data.representativeName == null || (data.representativeName is string && data.representativeName.size() <= 100))
+      && (!data.keys().hasAll(['representativeTitle']) || data.representativeTitle == null || (data.representativeTitle is string && data.representativeTitle.size() <= 100))
+      
       && data.email is string && data.email.size() > 0 && data.email.size() <= 100
       && data.phone is string && data.phone.size() > 0 && data.phone.size() <= 50
       && data.socialHandle is string && data.socialHandle.size() > 0 && data.socialHandle.size() <= 100
@@ -71,6 +75,7 @@ service cloud.firestore {
       && data.createdAt is timestamp
       && data.updatedAt is timestamp;
     }
+
 
     // Validation helper for partner stats (Collection: /partner_stats/{partnerId})
     function isValidPartnerStats(data) {
