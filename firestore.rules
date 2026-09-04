@@ -12,7 +12,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return (isSignedIn() && request.auth.token.email == 'deloxehrfirm@gmail.com') || true;
+      return isSignedIn() && request.auth.token.email == 'deloxehrfirm@gmail.com';
     }
 
     function isValidId(id) {

@@ -292,11 +292,12 @@ export async function getPartnerProfile(partnerId: string): Promise<PartnerDocum
  */
 export async function createPartnerProfile(partner: Omit<PartnerDocument, 'createdAt' | 'updatedAt' | 'agreementSignedAt'>): Promise<void> {
   const path = `partners/${partner.partnerId}`;
+  const now = Timestamp.now();
   const completePartner = {
     ...partner,
-    agreementSignedAt: serverTimestamp(),
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    agreementSignedAt: now,
+    createdAt: now,
+    updatedAt: now,
   };
   try {
     await setDoc(doc(db, "partners", partner.partnerId), completePartner);
@@ -311,6 +312,7 @@ export async function createPartnerProfile(partner: Omit<PartnerDocument, 'creat
  */
 export async function initializePartnerStats(partnerId: string): Promise<void> {
   const path = `partner_stats/${partnerId}`;
+  const now = Timestamp.now();
   const defaultStats: PartnerStatsDocument = {
     partnerId,
     totalClicks: 0,
@@ -319,7 +321,7 @@ export async function initializePartnerStats(partnerId: string): Promise<void> {
     totalPaid: 0,
     balance: 0,
     nextPayout: null,
-    updatedAt: serverTimestamp() as any,
+    updatedAt: now as any,
   };
   try {
     await setDoc(doc(db, "partner_stats", partnerId), defaultStats);
